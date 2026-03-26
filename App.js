@@ -1,114 +1,200 @@
-import { useState } from "react";
-import ItemList from "./components/ItemList";
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-function App() {
-  const [items, setItems] = useState([]);
-  const [input, setInput] = useState("");
+export default function App() {
+  const [city, setCity] = useState('');
+  const [weather, setWeather] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  const addItem = () => {
-    if (input.trim() === "") return;
+  const API_KEY = "415ae739b380858b0493a4c092b7deca";
 
-    const newItem = {
-      id: Date.now(),
-      text: input,
-      completed: false,
-    };
+  const searchWeather = async () => {
+    const formattedCity = city.trim();
 
-    setItems([...items, newItem]);
-    setInput("");
-  };
+    if (!formattedCity) {
+      alert("Please enter a city");
+      return;
+    }
 
-  const toggleItem = (id) => {
-    setItems(
-      items.map((item) =>
-        item.id === id
-          ? { ...item, completed: !item.completed }
-          : item
-      )
-    );
+    try {
+      setLoading(true);
+      setWeather(null);
+
+      // ✅ Check local storage first
+      const saved = await AsyncStorage.getItem(formattedCity);
+
+      if (saved) {
+        setWeather(JSON.parse(saved));
+        setLoading(false);
+        setCity('');
+        return;
+      }
+
+      // ✅ Fetch from API
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${formattedCity}&appid=${API_KEY}&units=metric`
+      );
+
+      if (response.status === 404) {
+        setLoading(false);
+        alert("City not found!");
+        return;
+      }
+
+      const data = await response.json();
+
+      const result = {
+        name: data.name,
+        country: data.sys.country,
+        station: data.base,
+        temp: data.main.temp,
+        icon: data.weather[0].icon
+      };
+
+      setWeather(result);
+
+      // ✅ Save locally
+      await AsyncStorage.setItem(formattedCity, JSON.stringify(result));
+
+      setCity('');
+
+    } catch (error) {
+      alert("Error fetching data");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.appBox}>
-        
-        {/* Input Row */}
-        <div style={styles.inputRow}>
-          <input
-            type="text"
-            placeholder="new item"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addItem()}
-            style={styles.input}
-          />
-          <button onClick={addItem} style={styles.addBtn}>
-            ADD ITEM
-          </button>
-        </div>
+    <View style={styles.container}>
+      <Text style={styles.title}>Weather App</Text>
 
-        {/* Title */}
-        <div style={styles.titleBox}>SHOPPING LIST</div>
-
-        {/* List */}
-        <ItemList
-          items={items}
-          onToggle={toggleItem}
-          onDelete={(id) =>
-            setItems(items.filter((item) => item.id !== id))
-        }
+      <TextInput
+        style={styles.input}
+        placeholder="Enter city name..."
+        value={city}
+        onChangeText={setCity}
       />
-      </div>
-    </div>
+
+      <TouchableOpacity style={styles.button} onPress={searchWeather}>
+        <Text style={styles.buttonText}>SEARCH</Text>
+      </TouchableOpacity>
+
+      {/* 🔄 Loading indicator */}
+      {loading && <ActivityIndicator size="large" color="#E55812" style={{ marginTop: 20 }} />}
+
+      {/* 🌤 Weather Card */}
+      {weather && !loading && (
+        <View style={styles.card}>
+          <Text style={styles.city}>
+            {weather.name} ({weather.country})
+          </Text>
+
+          <Text style={styles.station}>
+            {weather.station}
+          </Text>
+
+          <Text style={styles.temp}>
+            {weather.temp} °C
+          </Text>
+
+          <Image
+            source={
+              imageError
+                ? require('./assets/icon.png') // optional fallback image (put any image here)
+                : { uri: `https://openweathermap.org/img/w/${weather.icon}.png` }
+            }
+            style={styles.icon}
+            onError={() => setImageError(true)}
+          />
+        </View>
+      )}
+    </View>
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    background: "linear-gradient(135deg, #74ebd5, #9face6)",
-    fontFamily: "Arial",
-  },
-  appBox: {
-    width: "350px",
-    background: "white",
-    padding: "25px",
-    borderRadius: "15px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-  },
-  inputRow: {
-    display: "flex",
-    gap: "10px",
-    marginBottom: "20px",
-  },
-  input: {
     flex: 1,
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-    outline: "none",
-    fontSize: "14px",
+    backgroundColor: '#F9F5ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20
   },
-  addBtn: {
-    background: "#4CAF50",
-    color: "white",
-    border: "none",
-    padding: "10px 15px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    transition: "0.2s",
-  },
-  titleBox: {
-    textAlign: "center",
-    marginBottom: "15px",
-    fontWeight: "bold",
-    fontSize: "18px",
-    color: "#333",
-  },
-};
 
-export default App;
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333'
+  },
+
+  input: {
+    width: '80%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: '#fff'
+  },
+
+  button: {
+    backgroundColor: '#E55812',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginTop: 5
+  },
+
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold'
+  },
+
+  card: {
+    marginTop: 20,
+    padding: 20,
+    width: '80%',
+    borderRadius: 12,
+    backgroundColor: '#EFE7DA',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3
+  },
+
+  city: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 5
+  },
+
+  station: {
+    fontSize: 14,
+    color: '#555'
+  },
+
+  temp: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginVertical: 10,
+    color: '#E55812'
+  },
+
+  icon: {
+    width: 80,
+    height: 80
+  }
+});
