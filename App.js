@@ -16,7 +16,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const API_KEY = "415ae739b380858b0493a4c092b7deca";
+  const API_KEY = "YOUR_API_KEY";
 
   const searchWeather = async () => {
     const formattedCity = city.trim();
@@ -111,7 +111,7 @@ export default function App() {
           <Image
             source={
               imageError
-                ? require('./assets/icon.png') // optional fallback image (put any image here)
+                ? require('./assets/icon.png') // optional fallback image 
                 : { uri: `https://openweathermap.org/img/w/${weather.icon}.png` }
             }
             style={styles.icon}
