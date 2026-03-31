@@ -1,7 +1,14 @@
 import { useState } from "react";
-import ItemList from "./components/ItemList";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+} from "react-native";
 
-function App() {
+export default function App() {
   const [items, setItems] = useState([]);
   const [input, setInput] = useState("");
 
@@ -9,7 +16,7 @@ function App() {
     if (input.trim() === "") return;
 
     const newItem = {
-      id: Date.now(),
+      id: Date.now().toString(),
       text: input,
       completed: false,
     };
@@ -28,87 +35,113 @@ function App() {
     );
   };
 
+  const deleteItem = (id) => {
+    setItems(items.filter((item) => item.id !== id));
+  };
+
   return (
-    <div style={styles.container}>
-      <div style={styles.appBox}>
+    <View style={styles.container}>
+      <View style={styles.appBox}>
         
         {/* Input Row */}
-        <div style={styles.inputRow}>
-          <input
-            type="text"
+        <View style={styles.inputRow}>
+          <TextInput
             placeholder="new item"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addItem()}
+            onChangeText={setInput}
             style={styles.input}
           />
-          <button onClick={addItem} style={styles.addBtn}>
-            ADD ITEM
-          </button>
-        </div>
+
+          <TouchableOpacity onPress={addItem} style={styles.addBtn}>
+            <Text style={styles.btnText}>ADD</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Title */}
-        <div style={styles.titleBox}>SHOPPING LIST</div>
+        <Text style={styles.title}>SHOPPING LIST</Text>
 
         {/* List */}
-        <ItemList
-          items={items}
-          onToggle={toggleItem}
-          onDelete={(id) =>
-            setItems(items.filter((item) => item.id !== id))
-        }
-      />
-      </div>
-    </div>
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.itemRow}>
+              <TouchableOpacity onPress={() => toggleItem(item.id)}>
+                <Text
+                  style={[
+                    styles.itemText,
+                    item.completed && styles.completed,
+                  ]}
+                >
+                  {item.text}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => deleteItem(item.id)}>
+                <Text style={styles.delete}>❌</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+      </View>
+    </View>
   );
 }
-
-const styles = {
+const styles = StyleSheet.create({
   container: {
-    display: "flex",
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
-    background: "linear-gradient(135deg, #74ebd5, #9face6)",
-    fontFamily: "Arial",
+    backgroundColor: "#9face6",
   },
   appBox: {
-    width: "350px",
-    background: "white",
-    padding: "25px",
-    borderRadius: "15px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+    width: "90%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 15,
+    elevation: 5,
   },
   inputRow: {
-    display: "flex",
-    gap: "10px",
-    marginBottom: "20px",
+    flexDirection: "row",
+    marginBottom: 20,
   },
   input: {
     flex: 1,
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-    outline: "none",
-    fontSize: "14px",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 10,
   },
   addBtn: {
-    background: "#4CAF50",
+    backgroundColor: "#4CAF50",
+    marginLeft: 10,
+    paddingHorizontal: 15,
+    justifyContent: "center",
+    borderRadius: 8,
+  },
+  btnText: {
     color: "white",
-    border: "none",
-    padding: "10px 15px",
-    borderRadius: "8px",
-    cursor: "pointer",
     fontWeight: "bold",
-    transition: "0.2s",
   },
-  titleBox: {
+  title: {
     textAlign: "center",
-    marginBottom: "15px",
     fontWeight: "bold",
-    fontSize: "18px",
-    color: "#333",
+    fontSize: 18,
+    marginBottom: 15,
   },
-};
-
-export default App;
+  itemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+  },
+  itemText: {
+    fontSize: 16,
+  },
+  completed: {
+    textDecorationLine: "line-through",
+    color: "gray",
+  },
+  delete: {
+    fontSize: 18,
+  },
+});
