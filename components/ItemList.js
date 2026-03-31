@@ -1,8 +1,9 @@
-import Item from "./Item";
+import { View } from 'react-native';
+import Item from './Item';
 
 function ItemList({ items, onToggle, onDelete }) {
   return (
-    <div>
+    <View>
       {items.map((item) => (
         <Item
           key={item.id}
@@ -11,7 +12,7 @@ function ItemList({ items, onToggle, onDelete }) {
           onDelete={onDelete}
         />
       ))}
-    </div>
+    </View>
   );
 }
 

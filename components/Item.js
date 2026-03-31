@@ -1,51 +1,52 @@
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+
 function Item({ item, onToggle, onDelete }) {
   return (
-    <div style={styles.item}>
-      <span>{item.text}</span>
+    <View style={styles.item}>
+      <Text
+        style={[
+          styles.text,
+          item.completed && styles.completed
+        ]}
+      >
+        {item.text}
+      </Text>
 
-      <div style={styles.right}>
-        <input
-          type="checkbox"
-          checked={item.completed}
-          onChange={() => onToggle(item.id)}
-        />
+      <View style={styles.right}>
+        <TouchableOpacity onPress={() => onToggle(item.id)}>
+          <Text>{item.completed ? "☑️" : "⬜"}</Text>
+        </TouchableOpacity>
 
-        <button
-          onClick={() => onDelete(item.id)}
-          style={styles.deleteBtn}
-        >
-          ✖
-        </button>
-      </div>
-    </div>
+        <TouchableOpacity onPress={() => onDelete(item.id)}>
+          <Text style={styles.delete}>✖</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
-
-const styles = {
+const styles = StyleSheet.create({
   item: {
-    background: "#f7f9fc",
-    color: "#333",
-    padding: "12px",
-    marginBottom: "10px",
-    display: "flex",
+    backgroundColor: "#f7f9fc",
+    padding: 12,
+    marginBottom: 10,
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderRadius: "8px",
-    transition: "0.2s",
+    borderRadius: 8,
   },
   right: {
-    display: "flex",
+    flexDirection: "row",
     alignItems: "center",
-    gap: "10px",
   },
-  deleteBtn: {
-    background: "transparent",
-    border: "none",
+  text: {
+    color: "#333",
+  },
+  completed: {
+    textDecorationLine: "line-through",
+    color: "gray",
+  },
+  delete: {
     color: "#999",
-    opacity: 0.6,
-    cursor: "pointer",
-    fontSize: "14px",
+    marginLeft: 10,
   },
-};
-
-export default Item;
+});
